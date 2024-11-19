@@ -4,7 +4,6 @@ import commonFields from "../../../models/shared/commonFields.schema";
 // Team interface
 interface ITeam extends Document {
   name: string;
-  members: Types.ObjectId[]; // Array of user references
 }
 
 // Team Schema
@@ -14,12 +13,6 @@ const teamSchema = new Schema<ITeam>(
       type: String,
       required: true,
     },
-    members: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     ...commonFields,
   },
   { timestamps: true }

@@ -1,55 +1,47 @@
-import { Connection, Schema, Model, Document, ObjectId, Types } from "mongoose";
+import { Connection, Schema, Model, Document, Types } from "mongoose";
 import commonFields from "../../../models/shared/commonFields.schema";
+import { ActionEnum } from "../../../shared/enums/actionEnum";
 
-// Action enum for permission actions
-enum ActionEnum {
-  VIEW = "view",
-  CREATE = "create",
-  EDIT = "edit",
-  VERIFY = "verify",
-  REJECT = "reject",
-  APPROVE = "approve",
-  DELETE = "delete",
-}
-
-// Embedded permission interface inside the role
-interface IPermission {
+// Component permission interface with grouped actions
+interface IComponentPermission {
   componentId: Types.ObjectId; // Component (e.g., 'invoices', 'leads')
-  action: ActionEnum; // Permission action
+  actions: ActionEnum[]; // Array of actions (e.g., ['view', 'edit', 'approve'])
   state: number; // Numeric state (e.g., 0 for 'Draft')
-  description?: string; // Optional description
+  description?: string; // Optional description for the permission
 }
 
 // Role interface
 interface IRole extends Document {
   name: string; // Role name (e.g., 'Manager', 'Approver')
-  permissions: IPermission[]; // Array of embedded permissions
+  permissions: IComponentPermission[]; // Grouped permissions by component
 }
 
-// Permission schema embedded directly in the role
-const permissionSchema = new Schema<IPermission>({
+// Permission schema with grouped actions for each component
+const componentPermissionSchema = new Schema<IComponentPermission>({
   componentId: {
     type: Schema.Types.ObjectId,
     ref: "Component",
     required: true,
   },
-  action: {
-    type: String,
-    enum: Object.values(ActionEnum), // Restrict to the enum values
-    required: true,
-  },
+  actions: [
+    {
+      type: String,
+      enum: Object.values(ActionEnum), // Restrict to the enum values
+      required: true,
+    },
+  ],
   state: { type: Number, required: true },
   description: { type: String },
 });
 
-// Role schema that directly embeds permissions
+// Role schema with grouped permissions
 const roleSchema = new Schema<IRole>(
   {
     name: {
       type: String,
       required: true,
     },
-    permissions: [permissionSchema],
+    permissions: [componentPermissionSchema],
     ...commonFields,
   },
   { timestamps: true }

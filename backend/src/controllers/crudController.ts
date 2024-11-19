@@ -1,4 +1,4 @@
-import {  Response } from "express";
+import { Response } from "express";
 import { Connection, Model, FilterQuery, UpdateQuery } from "mongoose";
 import { IRequest } from "../types/IRequest";
 
@@ -43,6 +43,32 @@ export class CrudController<T> {
 
       const docs = await Model.find(filters).limit(limit).skip(skip).sort(sort);
       return res.status(200).json(docs);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      return res.status(500).json({ error: "Error fetching documents" });
+    }
+  }
+
+  // get docs for select options
+  async getOptions(req: IRequest, res: Response) {
+    try {
+      const tenantConnection = req.tenantConnection as Connection;
+      if (!tenantConnection) {
+        return res.status(500).json({ error: "Tenant connection not found" });
+      }
+
+      const Model = this.getModel(tenantConnection);
+
+      // Fetch documents and select only 'id' and 'name' fields
+      const docs = await Model.find().select("_id name");
+
+      // Transform data to AntD Select format
+      const formattedOptions = docs.map((doc: any) => ({
+        value: doc._id, // Use '_id' for the value
+        label: doc.name, // Use 'name' for the label
+      }));
+
+      return res.status(200).json(formattedOptions);
     } catch (error) {
       console.error("Error fetching documents:", error);
       return res.status(500).json({ error: "Error fetching documents" });

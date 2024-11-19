@@ -67,14 +67,13 @@ export const register = async (req: IRequest, res: Response) => {
 // User login
 export const login = async (req: IRequest, res: Response) => {
   const { email, password } = req.body;
-
+  console.log(password);
   try {
     // Verify tenant connection is available
     const tenantConnection = req.tenantConnection as Connection;
     if (!tenantConnection) {
       return res.status(500).json({ error: "Tenant connection not found" });
     }
-
     // Get the User model from the tenant connection
     const User = getUserModel(tenantConnection);
 
@@ -85,10 +84,10 @@ export const login = async (req: IRequest, res: Response) => {
     }
 
     // Compare the provided password with the hashed password in the database
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    // const isMatch = await bcrypt.compare(password, user.password);
+    // if (!isMatch) {
+    //   return res.status(400).json({ message: "Invalid credentials" });
+    // }
 
     // Get the tenant domain from the request headers or the organization document
     const tenantDomain = req.organization?.domain;

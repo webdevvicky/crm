@@ -39,7 +39,6 @@ const userSchema = new Schema<IUser>(
     password: {
       type: String,
       required: true,
-      select: false,
     },
     mobileNumber: {
       type: String,
@@ -80,32 +79,32 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-// Middleware to hash password before saving
-userSchema.pre("save", async function (next) {
-  const user = this as IUser;
+// // Middleware to hash password before saving
+// userSchema.pre("save", async function (next) {
+//   const user = this as IUser;
 
-  // Only hash the password if it has been modified (or is new)
-  if (!user.isModified("password")) {
-    return next();
-  }
+//   // Only hash the password if it has been modified (or is new)
+//   if (!user.isModified("password")) {
+//     return next();
+//   }
 
-  try {
-    // Generate a salt
-    const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+//   try {
+//     // Generate a salt
+//     const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
 
-    // Hash the password using the generated salt
-    const hashedPassword = await bcrypt.hash(user.password, salt);
+//     // Hash the password using the generated salt
+//     const hashedPassword = await bcrypt.hash(user.password, salt);
 
-    // Replace the plain text password with the hashed one
-    user.password = hashedPassword;
+//     // Replace the plain text password with the hashed one
+//     user.password = hashedPassword;
 
-    // Proceed with the save operation
-    next();
-  } catch (error: any) {
-    // Pass any errors to the next middleware
-    next(error);
-  }
-});
+//     // Proceed with the save operation
+//     next();
+//   } catch (error: any) {
+//     // Pass any errors to the next middleware
+//     next(error);
+//   }
+// });
 
 // Utility function to generate or get the User model for the given connection
 const getUserModel = (connection: Connection): Model<IUser> => {

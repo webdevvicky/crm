@@ -8,19 +8,25 @@ import { authMiddleware } from "./middleware/authMiddleware";
 import { tenantMiddleware } from "./middleware/tenantMiddleware";
 import userRoutes from "./api/user-modules/userRoutes";
 import { setUserFields } from "./middleware/setUserFields.middleware";
+const cors = require("cors");
 
 const app = express();
 dotenv.config();
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Allow requests from your frontend
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  })
+);
 app.use(express.json());
 
 // Connect to the main database
 connectMainDB();
 const port = process.env.PORT || 5000;
 app.use("/", tenantMiddleware, authRoutes);
-app.use("/", authMiddleware, setUserFields);
 
-app.use("/api", authMiddleware, tenantMiddleware, orgRoutes);
-app.use("/", userRoutes);
+app.use("/api", tenantMiddleware, authMiddleware, setUserFields, userRoutes);
 
 app.get("/", (req, res) => {
   res.send("CRM backend running!");

@@ -11,9 +11,9 @@ const teamController = new TeamController();
 const roleController = new RoleController();
 const componenetController = new ComponenetController();
 
-generateCrudRoutes(router, userController, "/users");
-generateCrudRoutes(router, teamController, "/teams");
-generateCrudRoutes(router, roleController, "/roles");
-generateCrudRoutes(router, componenetController, "/components");
+generateCrudRoutes(router, userController, "users");
+generateCrudRoutes(router, teamController, "teams");
+generateCrudRoutes(router, roleController, "roles");
+generateCrudRoutes(router, componenetController, "components");
 
 export default router;
