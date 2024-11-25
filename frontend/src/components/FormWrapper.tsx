@@ -1,12 +1,11 @@
-import React, { useEffect } from "react";
-import { Form, Button, Spin } from "antd";
+import React, { useEffect, useState } from "react";
+import { Form, Button, Spin, Modal } from "antd";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import apiService from "../api/apiService";
 import { EntityName, ENTITIES } from "../constants/entities";
 import { successHandler } from "../utils/notificationHandlers";
-import { useParams } from "react-router-dom";
 
-interface FormWrapperProps<T extends object | undefined> {
+interface FormWrapperProps<T> {
   id?: string;
   entityName: EntityName;
   children: React.ReactNode;
@@ -17,10 +16,12 @@ const FormWrapper = <T extends object | undefined>({
   entityName,
   children,
   onSuccess,
+  id,
 }: FormWrapperProps<T>) => {
   const [form] = Form.useForm();
   const endpoint = ENTITIES[entityName].endpoint;
-  const { id } = useParams();
+
+  const [open, setOpen] = useState(false);
 
   const { data, isFetching } = useQuery({
     queryKey: [endpoint, id],
@@ -51,9 +52,16 @@ const FormWrapper = <T extends object | undefined>({
     if (data) form.setFieldsValue(data);
   }, [data, form]);
 
-  const onFinish = (values: T) => {
-    console.log("Form Data Submitted:", values); // Log the form data
-    mutation.mutate(values); // Trigger the mutation
+  const onFinish = () => {
+    setOpen(true);
+  };
+
+  const handleConfirm = () => {
+    setOpen(false);
+    form.validateFields().then((values) => {
+      console.log(values);
+      mutation.mutate(values);
+    });
   };
 
   if (isFetching)
@@ -62,21 +70,31 @@ const FormWrapper = <T extends object | undefined>({
     );
 
   return (
-    <Form form={form} onFinish={onFinish} layout="vertical">
-      {children}
-      <Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          loading={mutation.isPending}
-          disabled={mutation.isPending}
-        >
-          {id
-            ? `Update ${ENTITIES[entityName].displayName}`
-            : `Create ${ENTITIES[entityName].displayName}`}
-        </Button>
-      </Form.Item>
-    </Form>
+    <>
+      <Form form={form} onFinish={onFinish} layout="vertical">
+        {children}
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={mutation.isPending}
+            disabled={mutation.isPending}
+          >
+            {id
+              ? `Update ${ENTITIES[entityName].displayName}`
+              : `Create ${ENTITIES[entityName].displayName}`}
+          </Button>
+        </Form.Item>
+      </Form>
+      <Modal
+        open={open}
+        onCancel={() => setOpen(false)}
+        onOk={handleConfirm}
+        centered
+      >
+        confirm
+      </Modal>
+    </>
   );
 };
 

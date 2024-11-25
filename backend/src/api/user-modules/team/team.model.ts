@@ -4,12 +4,17 @@ import commonFields from "../../../models/shared/commonFields.schema";
 // Team interface
 interface ITeam extends Document {
   name: string;
+  description: string;
 }
 
 // Team Schema
 const teamSchema = new Schema<ITeam>(
   {
     name: {
+      type: String,
+      required: true,
+    },
+    description: {
       type: String,
       required: true,
     },

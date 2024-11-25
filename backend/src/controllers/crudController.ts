@@ -17,7 +17,7 @@ export class CrudController<T> {
       return res.status(201).json(newDoc);
     } catch (error) {
       console.error("Error creating document:", error);
-      return res.status(500).json({ error: "Error creating document" });
+      return res.status(500).json({ error: error });
     }
   }
 
@@ -25,31 +25,58 @@ export class CrudController<T> {
   async getAll(req: IRequest, res: Response) {
     try {
       const tenantConnection = req.tenantConnection as Connection;
+
       if (!tenantConnection) {
         return res.status(500).json({ error: "Tenant connection not found" });
       }
 
       const Model = this.getModel(tenantConnection);
-      const filters: FilterQuery<T> = req.query.filters
-        ? JSON.parse(req.query.filters as string)
-        : {};
+
+      // Parse filters, pagination, and sorting from query params
+      const filters: FilterQuery<T> =
+        typeof req.query.filters === "string"
+          ? JSON.parse(req.query.filters) // Parse stringified JSON
+          : req.query.filters || {}; // Handle plain object directly
+
+      const page: number = req.query.page
+        ? parseInt(req.query.page as string, 10)
+        : 1;
       const limit: number = req.query.limit
         ? parseInt(req.query.limit as string, 10)
-        : 10;
-      const skip: number = req.query.skip
-        ? parseInt(req.query.skip as string, 10)
-        : 0;
+        : 10; // Default to 10 records per page
+      const skip: number = (page - 1) * limit; // Calculate skip based on page and limit
       const sort = req.query.sort ? JSON.parse(req.query.sort as string) : {};
 
-      const docs = await Model.find(filters).limit(limit).skip(skip).sort(sort);
-      return res.status(200).json(docs);
+      // Dynamically construct regex for the "name" field if it exists
+      if ((filters as any).name === "") {
+        delete (filters as any).name; // Remove the name filter if it's an empty string
+      } else if ((filters as any).name) {
+        (filters as any).name = {
+          $regex: (filters as any).name,
+          $options: "i", // Partial match, case-insensitive
+        };
+      }
+
+      // Fetch documents and total count
+      const [docs, total] = await Promise.all([
+        Model.find(filters).limit(limit).skip(skip).sort(sort), // Apply pagination
+        Model.countDocuments(filters), // Total matching records
+      ]);
+
+      // Return the response with documents and metadata
+      return res.status(200).json({
+        data: docs,
+        total,
+        page,
+        pageSize: limit,
+      });
     } catch (error) {
       console.error("Error fetching documents:", error);
       return res.status(500).json({ error: "Error fetching documents" });
     }
   }
 
-  // get docs for select options
+  // get options for select
   async getOptions(req: IRequest, res: Response) {
     try {
       const tenantConnection = req.tenantConnection as Connection;
@@ -59,10 +86,18 @@ export class CrudController<T> {
 
       const Model = this.getModel(tenantConnection);
 
-      // Fetch documents and select only 'id' and 'name' fields
-      const docs = await Model.find().select("_id name");
+      // Parse the 'name' query parameter for dynamic filtering
+      const nameFilter = req.query.name || ""; // Default to an empty string if no name is provided
 
-      // Transform data to AntD Select format
+      // Construct the filters with a regex for partial name matching
+      const filters: FilterQuery<any> = {
+        name: { $regex: nameFilter, $options: "i" }, // Case-insensitive partial match
+      };
+
+      // Fetch documents and select only '_id' and 'name' fields
+      const docs = await Model.find(filters).select("_id name").limit(10); // Add limit for performance
+
+      // Transform data to Ant Design Select format
       const formattedOptions = docs.map((doc: any) => ({
         value: doc._id, // Use '_id' for the value
         label: doc.name, // Use 'name' for the label

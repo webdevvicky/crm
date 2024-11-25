@@ -13,6 +13,34 @@ export const ENTITIES = {
       { name: "description", label: "Description", type: "textarea" },
     ],
   },
+  leads: {
+    endpoint: "leads",
+    displayName: "Lead",
+    pluralDisplayName: "Leads",
+    fields: [
+      {
+        name: "name",
+        label: "Lead Name",
+        type: "text",
+        rules: [{ required: true }],
+      },
+      { name: "description", label: "Description", type: "textarea" },
+    ],
+  },
+  teams: {
+    endpoint: "teams",
+    displayName: "Team",
+    pluralDisplayName: "Teams",
+    fields: [
+      {
+        name: "name",
+        label: "Role Name",
+        type: "text",
+        rules: [{ required: true }],
+      },
+      { name: "description", label: "Description", type: "textarea" },
+    ],
+  },
   users: {
     endpoint: "users",
     displayName: "User",
